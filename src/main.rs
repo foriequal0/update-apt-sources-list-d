@@ -52,6 +52,12 @@ fn update_file(path: &Path) -> Result<()> {
     let mut output = Vec::new();
     let mut new_sources = Vec::new();
     for line in content.lines() {
+        let line = if let Some(line) = disabled_on_upgrade(line) {
+            line
+        } else {
+            line
+        };
+
         match Source::from_str(line)
             .map_err(|_| anyhow::anyhow!("Cannot parse"))
             .and_then(try_update_source)
@@ -79,6 +85,14 @@ fn update_file(path: &Path) -> Result<()> {
         std::fs::write(path, final_output.as_bytes()).context("Failed to write new output")?;
     }
     Ok(())
+}
+
+fn disabled_on_upgrade(line: &str) -> Option<&str> {
+    if line.contains("disabled on upgrade") {
+        Some(line.trim().trim_start_matches("#"))
+    } else {
+        None
+    }
 }
 
 fn try_update_source(mut source: Source) -> Result<Source> {
