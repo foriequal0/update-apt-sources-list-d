@@ -88,8 +88,9 @@ fn update_file(path: &Path) -> Result<()> {
 }
 
 fn disabled_on_upgrade(line: &str) -> Option<&str> {
-    if line.contains("disabled on upgrade") {
-        Some(line.trim().trim_start_matches("#"))
+    let line = line.trim();
+    if line.starts_with("#") && line.contains("disabled on upgrade") {
+        Some(line.trim_start_matches("#"))
     } else {
         None
     }
