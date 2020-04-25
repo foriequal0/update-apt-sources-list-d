@@ -7,3 +7,10 @@ Enables and updates `/etc/apt/sources.list.d/*` source entries.
 2. Updates PPA sources that pointing old dists.
 
    Such as from `xenial`, `zesty` to more recent one such as `eoan`, `focal`.
+
+## Run
+
+```
+cargo build
+sudo ./target/debug/update-apt-source-list-d
+```
