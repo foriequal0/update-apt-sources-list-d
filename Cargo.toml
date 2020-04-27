@@ -1,5 +1,5 @@
 [package]
-name = "update-apt-source-list-d"
+name = "update-apt-sources-list-d"
 version = "0.1.0"
 authors = ["SeongChan Lee <foriequal@gmail.com>"]
 edition = "2018"

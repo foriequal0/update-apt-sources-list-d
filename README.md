@@ -1,4 +1,4 @@
-# update-apt-source-list-d
+# update-apt-sources-list-d
 
 Enables and updates `/etc/apt/sources.list.d/*` source entries.
 
@@ -12,5 +12,5 @@ Enables and updates `/etc/apt/sources.list.d/*` source entries.
 
 ```
 cargo build
-sudo ./target/debug/update-apt-source-list-d
+sudo ./target/debug/update-apt-sources-list-d
 ```
