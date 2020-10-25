@@ -7,17 +7,18 @@ use std::str::FromStr;
 
 use anyhow::{Context, Result};
 
+#[rustfmt::skip]
 const RELEASES: &[&str] = &[
     // 12.04
-    "precise", "quantal", "raring", "saucy",
+    "precise", "quantal", "raring", "saucy", 
     // 14.04
-    "trusty", "utopic", "vivid", "wily",
+    "trusty", "utopic", "vivid", "wily", 
     // 16.04
-    "xenial", "yakkety", "zesty", "artful",
+    "xenial", "yakkety", "zesty", "artful", 
     // 18.04
     "bionic", "cosmic", "disco", "eoan",
     // 20.04
-    "focal",
+    "focal", "groovy",
     // TODO: Add future releases
 ];
 
@@ -49,35 +50,63 @@ fn update_file(path: &Path) -> Result<()> {
     info!("Read {}", path.to_str().unwrap());
 
     let content = std::fs::read_to_string(path)?;
-    let mut output = Vec::new();
-    let mut new_sources = Vec::new();
-    for line in content.lines() {
-        let line = if let Some(line) = disabled_on_upgrade(line) {
-            line
+    let mut outputs = Vec::new();
+    let mut updated_sources = Vec::new();
+    for original_line in content.lines() {
+        let (line, uncommented) = if let Some(line) = disabled_on_upgrade(original_line) {
+            (line, true)
         } else {
-            line
+            (original_line, false)
         };
 
-        match Source::from_str(line)
-            .map_err(|_| anyhow::anyhow!("Cannot parse"))
-            .and_then(try_update_source)
-        {
-            Ok(new_source) => {
-                output.push(new_source.to_string());
-                new_sources.push(new_source);
+        let source = match Source::from_str(line) {
+            Ok(source) => source,
+            Err(_) => {
+                // preserve the original line if failed to parse
+                outputs.push(original_line.to_string());
+                continue;
             }
-            Err(_) => output.push(line.to_string()),
+        };
+
+        let (source, updated) =
+            if let Some((new_source, old_source)) = try_update_source(source.clone()) {
+                // Use updated source
+                info!("old: {}", old_source.to_string());
+                info!("updated: {} -> {}", old_source.dist, new_source.dist);
+                debug!("new: {}", new_source.to_string());
+                debug!("new release url: {}", new_source.release_url());
+                (Some(new_source), true)
+            } else if source.is_ok() {
+                // Current source is just working. Use it.
+                (Some(source), false)
+            } else {
+                warn!("Doesn't work: {}", source.to_string());
+                (None, false)
+            };
+
+        if let Some(source) = source {
+            outputs.push(source.to_string());
+            if uncommented || updated {
+                updated_sources.push((source, uncommented, updated));
+            }
+        } else {
+            outputs.push(original_line.to_string());
         }
     }
-    let mut final_output: String = output.join("\n");
+    let mut final_output: String = outputs.join("\n");
     if !final_output.ends_with("\n") {
         final_output.push_str("\n");
     }
 
-    if !new_sources.is_empty() {
+    if !updated_sources.is_empty() {
         println!("Updated {}", path.to_string_lossy());
-        for source in new_sources {
-            println!("  {}", source.to_string());
+        for (source, uncommented, updated) in updated_sources {
+            println!(
+                "  {}, uncommented: {}, updated: {}",
+                source.to_string(),
+                uncommented,
+                updated
+            );
         }
         let mut bak = path.to_path_buf();
         bak.set_extension("list.bak");
@@ -96,7 +125,7 @@ fn disabled_on_upgrade(line: &str) -> Option<&str> {
     }
 }
 
-fn try_update_source(mut source: Source) -> Result<Source> {
+fn try_update_source(mut source: Source) -> Option<(Source, Source)> {
     let old_source = source.clone();
     let mut old_dist = None;
     let mut new_source = None;
@@ -113,34 +142,19 @@ fn try_update_source(mut source: Source) -> Result<Source> {
 
         source.dist = source.dist.replace(current, next);
 
-        if reqwest::blocking::get(&source.release_url())
-            .and_then(|x| x.error_for_status())
-            .is_ok()
-        {
+        if source.is_ok() {
             new_source = Some(source.clone());
         }
     }
 
-    let new_source = if let Some(new_source) = new_source {
-        new_source
+    if let Some(new_source) = new_source {
+        Some((new_source, old_source))
     } else {
-        return Err(anyhow::anyhow!("not found"));
-    };
-
-    // TODO: wrap around problem
-    if RELEASES.last().expect("should exist") < &old_dist.expect("should exist").as_str() {
-        error!("Built in list of releases is oudated. Distribution might regress");
-        return Err(anyhow::anyhow!("possible regression"));
+        None
     }
-
-    info!("old: {}", old_source.to_string());
-    info!("updated: {} -> {}", old_source.dist, new_source.dist);
-    debug!("new: {}", new_source.to_string());
-    debug!("new release url: {}", new_source.release_url());
-    Ok(new_source)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Source {
     archive_type: String,
     arch: Option<String>,
@@ -167,6 +181,12 @@ impl Source {
     fn release_url(&self) -> String {
         format!("{}/dists/{}/Release", self.url, self.dist)
     }
+
+    fn is_ok(&self) -> bool {
+        reqwest::blocking::get(&self.release_url())
+            .and_then(|x| x.error_for_status())
+            .is_ok()
+    }
 }
 
 impl FromStr for Source {
@@ -181,7 +201,8 @@ impl FromStr for Source {
         let items: Vec<_> = s.split_whitespace().collect();
         if items.len() < 2 // To short to even determine
             || (items[1].starts_with("[") && items.len() < 4) // have arch but too short
-            || items.len() < 3 // doesn't have arch but too short
+            || items.len() < 3
+        // doesn't have arch but too short
         {
             return Err(());
         }
