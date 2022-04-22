@@ -19,6 +19,8 @@ const RELEASES: &[&str] = &[
     "bionic", "cosmic", "disco", "eoan",
     // 20.04
     "focal", "groovy", "hirsute", "impish",
+    // 22.04
+    "jammy",
     // TODO: Add future releases
 ];
 
