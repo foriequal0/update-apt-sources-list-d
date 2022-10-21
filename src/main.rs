@@ -20,7 +20,7 @@ const RELEASES: &[&str] = &[
     // 20.04
     "focal", "groovy", "hirsute", "impish",
     // 22.04
-    "jammy",
+    "jammy", "kinetic",
     // TODO: Add future releases
 ];
 
