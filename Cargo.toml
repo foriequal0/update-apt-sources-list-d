@@ -2,12 +2,14 @@
 name = "update-apt-sources-list-d"
 version = "0.1.0"
 authors = ["SeongChan Lee <foriequal@gmail.com>"]
-edition = "2018"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "^1.0.28"
-reqwest = { version = "^0.10.4", features = ["blocking"] }
-log = "0.4.8"
-env_logger = "0.7.1"
+anyhow = "^1.0.97"
+reqwest = { version = "0.12.15", features = ["blocking"] }
+log = "0.4.27"
+env_logger = "0.11.8"
+deb822-lossless = "0.2.4"
+lsb_release = "0.1.0"
