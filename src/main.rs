@@ -109,6 +109,8 @@ fn try_update_by_suites_name(paragraph: &mut Paragraph) -> Result<bool> {
     };
 
     let range = get_release_range_by_name(&suites);
+    let range = limit_release_range(range);
+
     if range.is_empty() {
         return Ok(false);
     }
@@ -146,6 +148,21 @@ fn get_release_range_by_name(target: &str) -> &'static [Release<'static>] {
     }
 
     &[]
+}
+
+fn limit_release_range<'a>(releases: &'a [Release<'static>]) -> &'a [Release<'static>] {
+    let Ok(lsb) = lsb_release::info() else {
+        return releases;
+    };
+
+    for i in 0..releases.len() {
+        let release = &RELEASES[i];
+        if release.name == lsb.code_name {
+            return &releases[..=i];
+        }
+    }
+
+    releases
 }
 
 fn get_http_uri(paragraph: &Paragraph) -> Option<String> {
