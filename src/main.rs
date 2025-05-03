@@ -29,7 +29,7 @@ const RELEASES: &[Release<'static>] = &[
     Release { name: "jammy", version: "22.04" }, Release { name: "kinetic", version: "22.10" },
     Release { name: "lunar", version: "23.04" }, Release { name: "mantic", version: "23.10" },
     Release { name: "noble", version: "24.04" }, Release { name: "oracular", version: "24.10" },
-    Release { name: "plucky", version: "25.04" },
+    Release { name: "plucky", version: "25.04" }, Release { name: "questing", version: "25.10" },
     // TODO: Add future releases
 ];
 
