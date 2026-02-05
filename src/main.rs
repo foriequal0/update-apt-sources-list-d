@@ -30,6 +30,7 @@ const RELEASES: &[Release<'static>] = &[
     Release { name: "lunar", version: "23.04" }, Release { name: "mantic", version: "23.10" },
     Release { name: "noble", version: "24.04" }, Release { name: "oracular", version: "24.10" },
     Release { name: "plucky", version: "25.04" }, Release { name: "questing", version: "25.10" },
+    Release { name: "resolute", version: "26.04" }, 
     // TODO: Add future releases
 ];
 
@@ -74,7 +75,7 @@ fn update_file(path: &Path) -> Result<()> {
     println!("Updated {}", path.to_string_lossy());
 
     let mut bak = path.to_path_buf();
-    bak.set_extension("soruces.bak");
+    bak.set_extension("sources.bak");
     std::fs::copy(path, bak).context("Failed to copy backup")?;
     std::fs::write(path, deb822.to_string().as_bytes()).context("Failed to write new output")?;
 
