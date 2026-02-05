@@ -157,7 +157,7 @@ fn limit_release_range<'a>(releases: &'a [Release<'static>]) -> &'a [Release<'st
     };
 
     for i in 0..releases.len() {
-        let release = &RELEASES[i];
+        let release = &releases[i];
         if release.name == lsb.code_name {
             return &releases[..=i];
         }
